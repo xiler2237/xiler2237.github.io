@@ -503,52 +503,6 @@ figure.highlight .code .line {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-/* =========================
-   文章卡片背景图优化
-   ========================= */
-
-/* 为文章封面容器添加渐变背景色占位 */
-.recent-post-item .post_cover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* 优化文章卡片封面图片 */
-.recent-post-item .post_cover .post-bg {
-  object-fit: cover;
-  object-position: center center;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.3s ease;
-}
-
-/* hover时的缩放效果 - 简化避免卡顿 */
-.recent-post-item:hover .post_cover .post-bg {
-  transform: scale(1.05);
-}
-
-/* =========================
-   文章详情页背景图优化
-   ========================= */
-
-/* 文章详情页背景图 - 简化配置提升性能 */
-#page-header.post-bg {
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: scroll !important;
-}
-
-/* 文章信息文字样式 */
-#post-info h1.post-title {
-  color: #fff !important;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-}
-
-#post-info .post-meta-wrap {
-  color: rgba(255, 255, 255, 0.9) !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
 /* 打字机效果优化 */
 #subtitle {
   color: #fff;
