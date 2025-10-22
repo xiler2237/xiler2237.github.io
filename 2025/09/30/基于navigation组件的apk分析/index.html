@@ -1,0 +1,275 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于navigation组件的apk分析 | Xilker's Blog</title><meta name="author" content="Xilker"><meta name="copyright" content="Xilker"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="基于Navigation 组件的 APK逆向分析基于这个组件的apk一般内部结构如下 MainActivity (容器层)├── 工具栏设置├── Navigation 配置├── FAB 按钮（提示信息）└── 菜单处理 FirstFragment (业务层) ← 真正的加密逻辑在这里├── UI 绑定├── 输入框处理└── 加密验证逻辑 一、架构特征识别1. Navigation 组件的典型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于navigation组件的apk分析">
+<meta property="og:url" content="https://xilker2237.github.io/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="Xilker&#39;s Blog">
+<meta property="og:description" content="基于Navigation 组件的 APK逆向分析基于这个组件的apk一般内部结构如下 MainActivity (容器层)├── 工具栏设置├── Navigation 配置├── FAB 按钮（提示信息）└── 菜单处理 FirstFragment (业务层) ← 真正的加密逻辑在这里├── UI 绑定├── 输入框处理└── 加密验证逻辑 一、架构特征识别1. Navigation 组件的典型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://xilker2237.github.io/blog_card_picture/1.png">
+<meta property="article:published_time" content="2025-09-30T02:00:00.000Z">
+<meta property="article:modified_time" content="2025-10-22T01:43:26.671Z">
+<meta property="article:author" content="Xilker">
+<meta property="article:tag" content="逆向工程">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="APK分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xilker2237.github.io/blog_card_picture/1.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于navigation组件的apk分析",
+  "url": "https://xilker2237.github.io/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/",
+  "image": "https://xilker2237.github.io/blog_card_picture/1.png",
+  "datePublished": "2025-09-30T02:00:00.000Z",
+  "dateModified": "2025-10-22T01:43:26.671Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Xilker",
+      "url": "https://xilker2237.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://xilker2237.github.io/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', () => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于navigation组件的apk分析',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/runtime.css"><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/tags-style.css"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/blog_card_picture/1.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Xilker's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">基于navigation组件的apk分析</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于navigation组件的apk分析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-09-30T02:00:00.000Z" title="发表于 2025-09-30 10:00:00">2025-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-10-22T01:43:26.671Z" title="更新于 2025-10-22 09:43:26">2025-10-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E9%80%86%E5%90%91%E5%B7%A5%E7%A8%8B/">逆向工程</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="基于Navigation-组件的-APK逆向分析"><a href="#基于Navigation-组件的-APK逆向分析" class="headerlink" title="基于Navigation 组件的 APK逆向分析"></a>基于Navigation 组件的 APK逆向分析</h1><p>基于这个组件的apk一般内部结构如下</p>
+<p>MainActivity (容器层)<br>├── 工具栏设置<br>├── Navigation 配置<br>├── FAB 按钮（提示信息）<br>└── 菜单处理</p>
+<p>FirstFragment (业务层) ← 真正的加密逻辑在这里<br>├── UI 绑定<br>├── 输入框处理<br>└── 加密验证逻辑</p>
+<h2 id="一、架构特征识别"><a href="#一、架构特征识别" class="headerlink" title="一、架构特征识别"></a>一、架构特征识别</h2><h3 id="1-Navigation-组件的典型标志"><a href="#1-Navigation-组件的典型标志" class="headerlink" title="1. Navigation 组件的典型标志"></a>1. Navigation 组件的典型标志</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MainActivity 中的关键代码</span></span><br><span class="line"><span class="type">NavController</span> <span class="variable">findNavController</span> <span class="operator">=</span> Navigation.findNavController(<span class="built_in">this</span>, R.id.nav_host_fragment_content_main);</span><br><span class="line">AppBarConfiguration.Builder(findNavController.getGraph()).build();</span><br><span class="line">NavigationUI.setupActionBarWithNavController(<span class="built_in">this</span>, findNavController, build);</span><br></pre></td></tr></table></figure>
+
+<p>逆向时的识别要点：</p>
+<ul>
+<li><p>看到 NavController、Navigation.findNavController</p>
+</li>
+<li><p>存在 nav_host_fragment 相关的资源 ID</p>
+</li>
+<li><p>NavigationUI 的调用</p>
+</li>
+<li><p>Activity 相对简洁，主要是配置代码</p>
+</li>
+</ul>
+<h2 id="二、代码定位策略"><a href="#二、代码定位策略" class="headerlink" title="二、代码定位策略"></a>二、代码定位策略</h2><h3 id="传统单-Activity-架构-vs-Navigation-架构"><a href="#传统单-Activity-架构-vs-Navigation-架构" class="headerlink" title="传统单 Activity 架构 vs Navigation 架构"></a>传统单 Activity 架构 vs Navigation 架构</h3><table>
+<thead>
+<tr>
+<th align="left">架构类型</th>
+<th align="left">业务逻辑位置</th>
+<th align="left">逆向重点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">传统架构</td>
+<td align="left">直接在 Activity 中</td>
+<td align="left">分析 MainActivity 即可</td>
+</tr>
+<tr>
+<td align="left">Navigation 架构</td>
+<td align="left">分散在各个 Fragment</td>
+<td align="left">需要逐个分析 Fragment</td>
+</tr>
+</tbody></table>
+<h2 id="三、遇到-Navigation-组件的-APK："><a href="#三、遇到-Navigation-组件的-APK：" class="headerlink" title="三、遇到 Navigation 组件的 APK："></a>三、遇到 Navigation 组件的 APK：</h2><ol>
+<li>MainActivity → 只看架构，不看业务逻辑</li>
+<li>res&#x2F;navigation&#x2F; → 找到所有 Fragment 的名称</li>
+<li>Fragment 类 → 这才是真正的逻辑所在</li>
+<li>res&#x2F;layout&#x2F;fragment_.xml → 查看UI控件ID</li>
+</ol>
+<h3 id="理解资源绑定"><a href="#理解资源绑定" class="headerlink" title=". 理解资源绑定"></a>. 理解资源绑定</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">this.binding.input      // 对应 layout 中的输入框</span><br><span class="line">this.binding.checkFlag  // 对应 layout 中的按钮</span><br></pre></td></tr></table></figure>
+
+<h3 id="追踪点击事件"><a href="#追踪点击事件" class="headerlink" title="追踪点击事件"></a>追踪点击事件</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">setOnClickListener()           // 按钮点击</span><br><span class="line">setOnEditorActionListener()    // 输入框确认</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、逆向分析步骤"><a href="#三、逆向分析步骤" class="headerlink" title="三、逆向分析步骤"></a>三、逆向分析步骤</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MainActivity.onCreate() </span></span><br><span class="line"><span class="comment">// 判断应用使用了 Navigation 组件</span></span><br><span class="line">Navigation.findNavController(<span class="built_in">this</span>, R.id.nav_host_fragment_content_main);</span><br></pre></td></tr></table></figure>
+
+<p>MainActivity函数没啥逻辑</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> work.pangbai.ezmydroid;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> android.content.DialogInterface;</span><br><span class="line"><span class="keyword">import</span> android.os.Bundle;</span><br><span class="line"><span class="keyword">import</span> android.view.Menu;</span><br><span class="line"><span class="keyword">import</span> android.view.MenuItem;</span><br><span class="line"><span class="keyword">import</span> android.view.View;</span><br><span class="line"><span class="keyword">import</span> androidx.appcompat.app.AppCompatActivity;</span><br><span class="line"><span class="keyword">import</span> androidx.navigation.NavController;</span><br><span class="line"><span class="keyword">import</span> androidx.navigation.Navigation;</span><br><span class="line"><span class="keyword">import</span> androidx.navigation.ui.AppBarConfiguration;</span><br><span class="line"><span class="keyword">import</span> androidx.navigation.ui.NavigationUI;</span><br><span class="line"><span class="keyword">import</span> com.google.android.material.dialog.MaterialAlertDialogBuilder;</span><br><span class="line"><span class="keyword">import</span> com.google.android.material.snackbar.Snackbar;</span><br><span class="line"><span class="keyword">import</span> work.pangbai.ezmydroid.databinding.ActivityMainBinding;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* loaded from: classes2.dex */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MainActivity</span> <span class="keyword">extends</span> <span class="title class_">AppCompatActivity</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> AppBarConfiguration appBarConfiguration;</span><br><span class="line">    <span class="keyword">private</span> ActivityMainBinding binding;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* JADX INFO: Access modifiers changed from: protected */</span></span><br><span class="line">    <span class="meta">@Override</span> <span class="comment">// androidx.fragment.app.FragmentActivity, androidx.activity.ComponentActivity, androidx.core.app.ComponentActivity, android.app.Activity</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onCreate</span><span class="params">(Bundle bundle)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onCreate(bundle);</span><br><span class="line">        <span class="type">ActivityMainBinding</span> <span class="variable">inflate</span> <span class="operator">=</span> ActivityMainBinding.inflate(getLayoutInflater());</span><br><span class="line">        <span class="built_in">this</span>.binding = inflate;</span><br><span class="line">        setContentView(inflate.getRoot());</span><br><span class="line">        setSupportActionBar(<span class="built_in">this</span>.binding.toolbar);</span><br><span class="line">        <span class="type">NavController</span> <span class="variable">findNavController</span> <span class="operator">=</span> Navigation.findNavController(<span class="built_in">this</span>, R.id.nav_host_fragment_content_main);</span><br><span class="line">        <span class="type">AppBarConfiguration</span> <span class="variable">build</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AppBarConfiguration</span>.Builder(findNavController.getGraph()).build();</span><br><span class="line">        <span class="built_in">this</span>.appBarConfiguration = build;</span><br><span class="line">        NavigationUI.setupActionBarWithNavController(<span class="built_in">this</span>, findNavController, build);</span><br><span class="line">        <span class="built_in">this</span>.binding.fab.setOnClickListener(<span class="keyword">new</span> <span class="title class_">View</span>.OnClickListener() &#123; <span class="comment">// from class: work.pangbai.ezmydroid.MainActivity.1</span></span><br><span class="line">            <span class="meta">@Override</span> <span class="comment">// android.view.View.OnClickListener</span></span><br><span class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClick</span><span class="params">(View view)</span> &#123;</span><br><span class="line">                Snackbar.make(view, <span class="string">&quot;喵喵喵，需要分析软件的代码呢，你安装了Jadx-Gui吗？&quot;</span>, <span class="number">0</span>).setAnchorView(R.id.fab).setAction(<span class="string">&quot;Action&quot;</span>, (View.OnClickListener) <span class="literal">null</span>).show();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span> <span class="comment">// android.app.Activity</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">onCreateOptionsMenu</span><span class="params">(Menu menu)</span> &#123;</span><br><span class="line">        getMenuInflater().inflate(R.menu.menu_main, menu);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span> <span class="comment">// android.app.Activity</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">onOptionsItemSelected</span><span class="params">(MenuItem menuItem)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (menuItem.getItemId() == R.id.action_settings) &#123;</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">MaterialAlertDialogBuilder</span>(<span class="built_in">this</span>).setTitle((CharSequence) <span class="string">&quot;NewStarCTF2025&quot;</span>).setMessage((CharSequence) <span class="string">&quot;欢迎参加 NewStarCTF2025，你需要解出类似于 flag&#123;&#125; 的文本，并在比赛平台提交&quot;</span>).setPositiveButton((CharSequence) <span class="string">&quot;OK&quot;</span>, (DialogInterface.OnClickListener) <span class="literal">null</span>).create().show();</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>.onOptionsItemSelected(menuItem);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span> <span class="comment">// androidx.appcompat.app.AppCompatActivity</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">onSupportNavigateUp</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> NavigationUI.navigateUp(Navigation.findNavController(<span class="built_in">this</span>, R.id.nav_host_fragment_content_main), <span class="built_in">this</span>.appBarConfiguration) || <span class="built_in">super</span>.onSupportNavigateUp();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Step-2-找到导航图"><a href="#Step-2-找到导航图" class="headerlink" title="Step 2: 找到导航图"></a>Step 2: 找到导航图</h3><ul>
+<li><p>查找 res&#x2F;navigation&#x2F;*.xml 文件</p>
+</li>
+<li><p>或在代码中搜索 Fragment 类</p>
+</li>
+<li><p>找 res&#x2F;values&#x2F;strings.xml文件</p>
+</li>
+</ul>
+<h3 id="Step-3-逐个分析-Fragment"><a href="#Step-3-逐个分析-Fragment" class="headerlink" title="Step 3: 逐个分析 Fragment"></a>Step 3: 逐个分析 Fragment</h3><p>找到解密逻辑直接分析解密即可</p>
+<p><img src="/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/image-20250930225224871.png" alt="基于navigation组件的apk分析/image-20250930225224871"></p>
+<p>解密脚本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">import</span> base64</span><br><span class="line"></span><br><span class="line">key = <span class="string">b&quot;1145141919810000&quot;</span></span><br><span class="line">ciphertext = base64.b64decode(<span class="string">&quot;cTz2pDhl8fRMfkkJXfqs2t8JBsqLkvQZDLYpWjEtkLE=&quot;</span>)</span><br><span class="line"></span><br><span class="line">cipher = AES.new(key, AES.MODE_ECB)</span><br><span class="line">plaintext = cipher.decrypt(ciphertext)</span><br><span class="line">flag = plaintext.strip()  <span class="comment"># 去除填充</span></span><br><span class="line"><span class="built_in">print</span>(flag.decode())</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io">Xilker</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/">https://xilker2237.github.io/2025/09/30/%E5%9F%BA%E4%BA%8Enavigation%E7%BB%84%E4%BB%B6%E7%9A%84apk%E5%88%86%E6%9E%90/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xilker2237.github.io" target="_blank">Xilker's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E9%80%86%E5%90%91%E5%B7%A5%E7%A8%8B/">逆向工程</a><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/APK%E5%88%86%E6%9E%90/">APK分析</a></div><div class="post-share"><div class="social-share" data-image="/blog_card_picture/1.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/10/07/CVE%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="CVE漏洞复现"><img class="cover" src="/blog_card_picture/3.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CVE漏洞复现</div></div><div class="info-2"><div class="info-item-1">D-Link DSL-2888A 远程命令执行漏洞分析漏洞编号：CVE-2020-24581漏洞描述: D-Link DSL-2888A AU_2.31_V1.1.47ae55之前版本存在安全漏洞，该漏洞源于包含一个execute cmd.cgi特性(不能通过web用户界面访问)，该特性允许经过身份验证的用户执行操作系统命令。在该版本固件中同时存在着一个不安全认证漏洞（CVE-2020-24580），在登录界面输入任意密码就可以成功访问路由器界面。通过组合这两个漏洞可以实现未授权的任意代码执行 复现所需要的固件下载链接:下载 第一次复现漏洞，这是路由器的官方页面  下载完固件后打开ubuntu用binwalk来提取文件 1binwalk -Me vuln.bin  # 我这里是固件重命名了看着方便  解压之后可以看到是jffs2文件系统（日志闪存文件系统）   POC: http：//DeviceIP/cgi-bin/execute_cmd.cgi？timestamp = 1589333279490＆cmd = whami http://IP/cgi-bin/execute_cm...</div></div></div></a><a class="pagination-related" href="/2025/09/30/rust%E8%AF%AD%E8%A8%80%E5%AD%A6%E4%B9%A0/" title="rust语言学习"><img class="cover" src="/blog_card_picture/5.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">rust语言学习</div></div><div class="info-2"><div class="info-item-1">Rust如果要声明变量，需要使用 let 关键字。例如： 1let a = 123;  在这句声明语句之后，以下三行代码都是被禁止的： 123a = &quot;abc&quot;;a = 4.56; a = 456;  第一行的错误在于当声明 a 是 123 以后，a 就被确定为整型数字，不能把字符串类型的值赋给它。 第二行的错误在于自动转换数字精度有损失，Rust 语言不允许精度有损失的自动数据类型转换。 第三行的错误在于 a 不是个可变变量。 常量与不可变变量的区别 既然不可变变量是不可变的，那不就是常量吗？为什么叫变量？ 变量和常量还是有区别的。在 Rust 中，以下程序是合法的： 12let a = 123;   // 可以编译，但可能有警告，因为该变量没有被使用let a = 456;  但是如果 a 是常量就不合法： 12const a: i32 = 123;let a = 456;  变量的值可以”重新绑定”，但在”重新绑定”以前不能私自被改变，这样可以确保在每一次”绑定”之后的区域里编译器可以充分的推理程序逻辑。 虽然 Rust 有自动判断类型的功能，但有些情况...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/09/30/IDA-MCP%E4%B8%8ECursor%E4%BD%BF%E7%94%A8/" title="IDA-MCP与Cursor使用"><img class="cover" src="/blog_card_picture/4.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-30</div><div class="info-item-2">IDA-MCP与Cursor使用</div></div><div class="info-2"><div class="info-item-1">IDA-MCP与Cursor使用准备工具：Cursor，IDA9.1,IDA内置python,Cursor续杯工具 客户端配置：下载cursor后配置network  配置这里的tools  服务端配置：IDA-MCP插件下载 https://github.com/mrexodia/ida-pro-mcp 我这里下载的是增强版本，将这个插件的MCP-plugin.py文件放入ida9.1的插件文件目录下  然后根据官网的提示安装： 1pip install https://github.com/mrexodia/ida-pro-mcp/archive/refs/heads/main.zip   接着安装： 1ida-pro-mcp --install   下载后使用这个命令来获取服务端的配置文件，将这个配置文件放入刚才下好的cursor的tools下的MCP的json文件中  这里其实已经自动识别了，无需配置文件  由于每次使用工具会询问是否使用工具，所以这里直接设置，自动执行  进入ida发现可以加载插件，点击使用即可，下面给出服务启动的地址视为配置成功   </div></div></div></a><a class="pagination-related" href="/2025/10/09/%E5%B8%B8%E8%A7%81%E5%8E%8B%E7%BC%A9%E5%A3%B3%E8%84%B1%E5%A3%B3%E5%88%86%E6%9E%90/" title="常见压缩壳脱壳分析"><img class="cover" src="/blog_card_picture/4.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-10-09</div><div class="info-item-2">常见压缩壳脱壳分析</div></div><div class="info-2"><div class="info-item-1">常见压缩壳脱壳分析1.UPX壳文件下载ELF 先分析一下文件，发现有UPX壳。elf ![屏幕截图 2025-10-09 161748](C:\Users\xiler\Pictures\Screenshots\屏幕截图 2025-10-09 161748.png 放入010中也没有发现很明显的UPX特性，尝试手动脱壳  这里有一个小插曲是程序类型可能是DYN， ida动调时会提示：”Inputfile is a dynamic file…”无法调试 这时候可以修改文件头信息从03-&gt;DYN改为02-&gt;EXEC  这里附一张gemini的解释：其原理是骗过ida的检测  kali中启动远程调试  ida中在start处下断点，进行调试  进来后一直F8b步过可以看到这个地方，继续往下步过  继续步过到这里，然后步进  进来后是这个，这里有三个循环，直接跳过，可以下断点跳过去，这里步过的一大串，还调用syscall,这些都是在调用解密函数来自解密这个压缩壳   一直步过到这里，这里的jmp qword ptr [r14-8]算是喝oep类似的一个特征在这里需要步进不能步过...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Xilker</div><div class="author-info-description">自律源于热爱</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xiler2237"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/xiler2237" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:your-email@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Xilker's Blog！自律源于热爱。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8ENavigation-%E7%BB%84%E4%BB%B6%E7%9A%84-APK%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">基于Navigation 组件的 APK逆向分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%9E%B6%E6%9E%84%E7%89%B9%E5%BE%81%E8%AF%86%E5%88%AB"><span class="toc-number">1.1.</span> <span class="toc-text">一、架构特征识别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Navigation-%E7%BB%84%E4%BB%B6%E7%9A%84%E5%85%B8%E5%9E%8B%E6%A0%87%E5%BF%97"><span class="toc-number">1.1.1.</span> <span class="toc-text">1. Navigation 组件的典型标志</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E4%BB%A3%E7%A0%81%E5%AE%9A%E4%BD%8D%E7%AD%96%E7%95%A5"><span class="toc-number">1.2.</span> <span class="toc-text">二、代码定位策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%A0%E7%BB%9F%E5%8D%95-Activity-%E6%9E%B6%E6%9E%84-vs-Navigation-%E6%9E%B6%E6%9E%84"><span class="toc-number">1.2.1.</span> <span class="toc-text">传统单 Activity 架构 vs Navigation 架构</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%81%87%E5%88%B0-Navigation-%E7%BB%84%E4%BB%B6%E7%9A%84-APK%EF%BC%9A"><span class="toc-number">1.3.</span> <span class="toc-text">三、遇到 Navigation 组件的 APK：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%90%86%E8%A7%A3%E8%B5%84%E6%BA%90%E7%BB%91%E5%AE%9A"><span class="toc-number">1.3.1.</span> <span class="toc-text">. 理解资源绑定</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%BD%E8%B8%AA%E7%82%B9%E5%87%BB%E4%BA%8B%E4%BB%B6"><span class="toc-number">1.3.2.</span> <span class="toc-text">追踪点击事件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%80%86%E5%90%91%E5%88%86%E6%9E%90%E6%AD%A5%E9%AA%A4"><span class="toc-number">1.4.</span> <span class="toc-text">三、逆向分析步骤</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-2-%E6%89%BE%E5%88%B0%E5%AF%BC%E8%88%AA%E5%9B%BE"><span class="toc-number">1.4.1.</span> <span class="toc-text">Step 2: 找到导航图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Step-3-%E9%80%90%E4%B8%AA%E5%88%86%E6%9E%90-Fragment"><span class="toc-number">1.4.2.</span> <span class="toc-text">Step 3: 逐个分析 Fragment</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/10/21/%E9%AB%98%E6%A0%A1%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E7%AE%A1%E7%90%86%E8%BF%90%E7%BB%B4%E8%B5%9B/" title="高校网络安全管理运维赛"><img src="/blog_card_picture/2.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="高校网络安全管理运维赛"/></a><div class="content"><a class="title" href="/2025/10/21/%E9%AB%98%E6%A0%A1%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E7%AE%A1%E7%90%86%E8%BF%90%E7%BB%B4%E8%B5%9B/" title="高校网络安全管理运维赛">高校网络安全管理运维赛</a><time datetime="2025-10-21T02:00:00.000Z" title="发表于 2025-10-21 10:00:00">2025-10-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/13/newstar%20week3/" title="newstar week3"><img src="/blog_card_picture/1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="newstar week3"/></a><div class="content"><a class="title" href="/2025/10/13/newstar%20week3/" title="newstar week3">newstar week3</a><time datetime="2025-10-13T02:00:00.000Z" title="发表于 2025-10-13 10:00:00">2025-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/10/pwn-awd%E7%9F%A5%E8%AF%86%E5%BA%93/" title="pwn-awd知识库"><img src="/blog_card_picture/5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="pwn-awd知识库"/></a><div class="content"><a class="title" href="/2025/10/10/pwn-awd%E7%9F%A5%E8%AF%86%E5%BA%93/" title="pwn-awd知识库">pwn-awd知识库</a><time datetime="2025-10-10T02:00:00.000Z" title="发表于 2025-10-10 10:00:00">2025-10-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/09/%E5%B8%B8%E8%A7%81%E5%8E%8B%E7%BC%A9%E5%A3%B3%E8%84%B1%E5%A3%B3%E5%88%86%E6%9E%90/" title="常见压缩壳脱壳分析"><img src="/blog_card_picture/4.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="常见压缩壳脱壳分析"/></a><div class="content"><a class="title" href="/2025/10/09/%E5%B8%B8%E8%A7%81%E5%8E%8B%E7%BC%A9%E5%A3%B3%E8%84%B1%E5%A3%B3%E5%88%86%E6%9E%90/" title="常见压缩壳脱壳分析">常见压缩壳脱壳分析</a><time datetime="2025-10-09T02:00:00.000Z" title="发表于 2025-10-09 10:00:00">2025-10-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/07/CVE%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="CVE漏洞复现"><img src="/blog_card_picture/3.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CVE漏洞复现"/></a><div class="content"><a class="title" href="/2025/10/07/CVE%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="CVE漏洞复现">CVE漏洞复现</a><time datetime="2025-10-07T02:00:00.000Z" title="发表于 2025-10-07 10:00:00">2025-10-07</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 By Xilker</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0-b1</a></span></div><div class="footer_custom_text">Powered <a href="https://hexo.io" target="_blank">Hexo</a>,Hosted <a href="https://vercel.com" target="_blank">Vercel</a> | Hosted <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>,CDN BY <a href="https://www.jsdelivr.com" target="_blank">jsDelivr</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script src="/js/title.js"></script><script src="/js/runtime.js"></script><script src="/js/random.js"></script><script src="/js/post-card-bg.js"></script><script src="/js/card-click.js"></script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script><script src="/js/tag-chart.js"></script><script src="/js/category-chart.js"></script><script src="/js/busuanzi-index.js"></script></div></body></html>

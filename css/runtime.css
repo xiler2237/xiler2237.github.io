@@ -1,0 +1,53 @@
+/* 网站运行时间样式 */
+.runtime-box {
+  text-align: center;
+  padding: 20px;
+  margin: 15px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.runtime-box span {
+  font-weight: bold;
+  font-size: 18px;
+  padding: 0 3px;
+}
+
+.runtime-days {
+  color: #ffd700;
+}
+
+.runtime-hours {
+  color: #87ceeb;
+}
+
+.runtime-minutes {
+  color: #98fb98;
+}
+
+.runtime-seconds {
+  color: #ffa07a;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .runtime-box {
+  background: linear-gradient(135deg, #434343 0%, #000000 100%);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .runtime-box {
+    font-size: 14px;
+    padding: 15px;
+  }
+  
+  .runtime-box span {
+    font-size: 16px;
+  }
+}
+
