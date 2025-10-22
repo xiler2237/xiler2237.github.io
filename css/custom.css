@@ -507,89 +507,44 @@ figure.highlight .code .line {
    文章卡片背景图优化
    ========================= */
 
-/* 优化文章卡片封面图片显示质量 */
+/* 优化文章卡片封面图片 - 简化以避免卡顿 */
 .recent-post-item .post_cover .post-bg {
-  /* 4K图片使用自动渲染即可，无需额外优化 */
-  image-rendering: auto;
-  /* 确保图片完整覆盖，使用 cover 保持比例 */
   object-fit: cover;
   object-position: center center;
-  /* 确保宽高100% */
   width: 100%;
   height: 100%;
-  /* 平滑过渡 */
-  transition: transform 0.6s ease, filter 0.3s ease;
-  /* 防止图片加载时的闪烁 */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  transition: transform 0.3s ease;
+  will-change: transform;
 }
 
-/* hover时的缩放效果 */
+/* hover时的缩放效果 - 简化 */
 .recent-post-item:hover .post_cover .post-bg {
-  transform: scale(1.1);
-  filter: brightness(1.05);
+  transform: scale(1.05);
 }
 
 /* =========================
    文章详情页背景图优化
    ========================= */
 
-/* 文章详情页的page-header背景图完整显示 */
+/* 文章详情页的page-header背景图 - 使用简单的cover避免卡顿 */
 #page-header.post-bg {
-  /* 使用 100% 自动缩放，保持原图比例，适合4K高清图片 */
-  background-size: 100% auto !important;
-  background-position: center top !important;
+  background-size: cover !important;
+  background-position: center center !important;
   background-repeat: no-repeat !important;
-  /* 使用普通滚动，避免fixed导致的突然放大效果 */
   background-attachment: scroll !important;
-  /* 适当增加高度，确保背景图有足够显示空间 */
-  min-height: 400px !important;
-  /* 添加平滑过渡，避免跳动 */
-  transition: none !important;
+  will-change: auto !important;
 }
 
-/* 移动端优化 */
-@media screen and (max-width: 768px) {
-  #page-header.post-bg {
-    min-height: 360px !important;
-    /* 移动端可以使用cover适配小屏幕 */
-    background-size: cover !important;
-  }
-}
-
-/* 中等屏幕优化 */
-@media screen and (min-width: 769px) and (max-width: 1999px) {
-  #page-header.post-bg {
-    /* 保持100%宽度，高度自适应 */
-    background-size: 100% auto !important;
-    min-height: 420px !important;
-  }
-}
-
-/* 大屏幕优化 - 2K/4K显示器 */
-@media screen and (min-width: 2000px) {
-  #page-header.post-bg {
-    /* 大屏幕使用contain完整显示图片 */
-    background-size: contain !important;
-    min-height: 600px !important;
-  }
-}
-
-/* 优化遮罩层，让背景图更清晰可见 */
+/* 优化遮罩层 */
 #page-header.post-bg:before {
   background-color: rgba(0, 0, 0, 0.3) !important;
 }
 
-/* 暗色模式下的遮罩调整 */
 [data-theme="dark"] #page-header.post-bg:before {
   background-color: rgba(0, 0, 0, 0.4) !important;
 }
 
-/* 确保文章信息区域在背景图上清晰可见 */
-#post-info {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
+/* 文章信息文字样式 */
 #post-info h1.post-title {
   color: #fff !important;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
