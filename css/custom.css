@@ -534,45 +534,13 @@ figure.highlight .code .line {
    文章详情页背景图优化
    ========================= */
 
-/* 文章详情页的page-header背景图完整显示 */
+/* 文章详情页的page-header背景图 - 保持合理大小不过度放大 */
 #page-header.post-bg {
-  /* 使用 100% 自动缩放，保持原图比例，适合4K高清图片 */
-  background-size: 100% auto !important;
-  background-position: center top !important;
+  background-size: cover !important;
+  background-position: center center !important;
   background-repeat: no-repeat !important;
-  /* 使用普通滚动，避免fixed导致的突然放大效果 */
   background-attachment: scroll !important;
-  /* 适当增加高度，确保背景图有足够显示空间 */
-  min-height: 400px !important;
-  /* 添加平滑过渡，避免跳动 */
-  transition: none !important;
-}
-
-/* 移动端优化 */
-@media screen and (max-width: 768px) {
-  #page-header.post-bg {
-    min-height: 360px !important;
-    /* 移动端可以使用cover适配小屏幕 */
-    background-size: cover !important;
-  }
-}
-
-/* 中等屏幕优化 */
-@media screen and (min-width: 769px) and (max-width: 1999px) {
-  #page-header.post-bg {
-    /* 保持100%宽度，高度自适应 */
-    background-size: 100% auto !important;
-    min-height: 420px !important;
-  }
-}
-
-/* 大屏幕优化 - 2K/4K显示器 */
-@media screen and (min-width: 2000px) {
-  #page-header.post-bg {
-    /* 大屏幕使用contain完整显示图片 */
-    background-size: contain !important;
-    min-height: 600px !important;
-  }
+  height: 400px !important;
 }
 
 /* 优化遮罩层，让背景图更清晰可见 */
