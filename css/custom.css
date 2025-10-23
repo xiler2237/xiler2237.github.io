@@ -319,6 +319,39 @@ figure.highlight {
   overflow: hidden;
 }
 
+/* 代码块表格滚动条美化 */
+.container figure.highlight table::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.container figure.highlight table::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.3);
+  border-radius: 4px;
+}
+
+.container figure.highlight table::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 120, 0.5);
+}
+
+.container figure.highlight table::-webkit-scrollbar-track {
+  background: rgba(200, 200, 200, 0.1);
+  border-radius: 4px;
+}
+
+/* 暗色模式代码块滚动条 */
+[data-theme="dark"] .container figure.highlight table::-webkit-scrollbar-thumb {
+  background: rgba(180, 180, 180, 0.3);
+}
+
+[data-theme="dark"] .container figure.highlight table::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 200, 200, 0.4);
+}
+
+[data-theme="dark"] .container figure.highlight table::-webkit-scrollbar-track {
+  background: rgba(100, 100, 100, 0.1);
+}
+
 [data-theme="dark"] .highlight,
 [data-theme="dark"] figure.highlight {
   background: linear-gradient(135deg, #1a1f35 0%, #151a2e 100%) !important;
