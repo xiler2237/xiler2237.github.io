@@ -1,0 +1,242 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Xilker's Blog | Xilker's Blog</title><meta name="author" content="Xilker"><meta name="copyright" content="Xilker"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="拿到FMC的逆向题目先用xspy观察一下这个题目窗口，可以发现最下面的OnCommand窗口，检测出id为03e9。同时给出了ida中函数的地址，这里就可以推测这里存在着题目的check逻辑  去花脚本 找到if判断的函数，往下走可以进入correct的分支，则证明上面存在检查逻辑      函数 作用    sub_483880 管理内部字符串对象，写时拷贝 + 引用计数   sub_48260">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Xilker&#39;s Blog">
+<meta property="og:url" content="https://xilker2237.github.io/2025/10/27/FMC%E9%80%86%E5%90%91/index.html">
+<meta property="og:site_name" content="Xilker&#39;s Blog">
+<meta property="og:description" content="拿到FMC的逆向题目先用xspy观察一下这个题目窗口，可以发现最下面的OnCommand窗口，检测出id为03e9。同时给出了ida中函数的地址，这里就可以推测这里存在着题目的check逻辑  去花脚本 找到if判断的函数，往下走可以进入correct的分支，则证明上面存在检查逻辑      函数 作用    sub_483880 管理内部字符串对象，写时拷贝 + 引用计数   sub_48260">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://xilker2237.github.io/blog_card_picture/2.png">
+<meta property="article:published_time" content="2025-10-27T07:12:38.400Z">
+<meta property="article:modified_time" content="2025-10-27T09:04:52.884Z">
+<meta property="article:author" content="Xilker">
+<meta property="article:tag" content="博客,Blog,技术,学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://xilker2237.github.io/blog_card_picture/2.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "",
+  "url": "https://xilker2237.github.io/2025/10/27/FMC%E9%80%86%E5%90%91/",
+  "image": "https://xilker2237.github.io/blog_card_picture/2.png",
+  "datePublished": "2025-10-27T07:12:38.400Z",
+  "dateModified": "2025-10-27T09:04:52.884Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Xilker",
+      "url": "https://xilker2237.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://xilker2237.github.io/2025/10/27/FMC%E9%80%86%E5%90%91/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', () => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Xilker\'s Blog',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/runtime.css"><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/tags-style.css"><script src="/js/cache-images.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">19</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/blog_card_picture/2.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Xilker's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Xilker's Blog</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="javascript:toRandomPost()"><i class="fa-fw fas fa-random"></i><span> 随机</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-users"></i><span> 社交</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></li><li><a class="site-page child" href="/comment/"><i class="fa-fw fas fa-comments"></i><span> 留言</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">无标题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-10-27T07:12:38.400Z" title="发表于 2025-10-27 15:12:38">2025-10-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-10-27T09:04:52.884Z" title="更新于 2025-10-27 17:04:52">2025-10-27</time></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>拿到FMC的逆向题目先用xspy观察一下这个题目窗口，可以发现最下面的OnCommand窗口，检测出id为03e9。同时给出了ida中函数的地址，这里就可以推测这里存在着题目的check逻辑</p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027165216065.png" alt="image-20251027165216065" loading='lazy'></p>
+<p>去花脚本</p>
+<p>找到if判断的函数，往下走可以进入correct的分支，则证明上面存在检查逻辑</p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027153528461.png" alt="image-20251027153528461" loading='lazy'></p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027153450284.png" alt="image-20251027153450284" loading='lazy'></p>
+<table>
+<thead>
+<tr>
+<th>函数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sub_483880</code></td>
+<td>管理内部字符串对象，<strong>写时拷贝 + 引用计数</strong></td>
+</tr>
+<tr>
+<td><code>sub_482600</code></td>
+<td><strong>读取输入字符串并验证是否为正确 flag &#x2F; key &#x2F; 密码</strong>，其中包含复杂的字符映射验证逻辑</td>
+</tr>
+</tbody></table>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027153801803.png" alt="image-20251027153801803" loading='lazy'></p>
+<p>进入482600函数后接着往下找到sub_482AF0函数，这里判断了输入的字符串是否为38，且去除了flag开头和尾部。同时反转了整个字符串</p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027155122657.png" alt="image-20251027155122657" loading='lazy'></p>
+<p>动调可以看到这一部分在实现rc4的密钥生成流</p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027162359298.png" alt="image-20251027162359298" loading='lazy'></p>
+<p>在这里进行异或后的字符串与密文判断</p>
+<p><img src="/2025/10/27/FMC%E9%80%86%E5%90%91/image-20251027163558839.png" alt="image-20251027163558839" loading='lazy'></p>
+<p>去花脚本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> ida_bytes <span class="keyword">import</span> get_bytes, patch_bytes</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line">addr = <span class="number">0x402600</span></span><br><span class="line">end = <span class="number">0x402ae3</span></span><br><span class="line">buf = get_bytes(addr, end-addr)</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">handler1</span>(<span class="params">s</span>):</span><br><span class="line">    s = s.group(<span class="number">0</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;&quot;</span>.join([<span class="string">&quot;%02x&quot;</span>%i <span class="keyword">for</span> i <span class="keyword">in</span> s]))</span><br><span class="line">    s = <span class="string">b&quot;\x90&quot;</span>*<span class="built_in">len</span>(s)</span><br><span class="line">    <span class="keyword">return</span> s</span><br><span class="line">p = <span class="string">b&quot;\xe8\x00\x00\x00\x00.*?\xc3.*?\xc3&quot;</span></span><br><span class="line">buf = re.sub(p, handler1, buf, flags=re.I)</span><br><span class="line">patch_bytes(addr, buf)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Done&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io">Xilker</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://xilker2237.github.io/2025/10/27/FMC%E9%80%86%E5%90%91/">https://xilker2237.github.io/2025/10/27/FMC%E9%80%86%E5%90%91/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://xilker2237.github.io" target="_blank">Xilker's Blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/blog_card_picture/2.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/10/29/fmt%E6%BC%8F%E6%B4%9E/" title=""><img class="cover" src="/blog_card_picture/4.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2"></div></div><div class="info-2"><div class="info-item-1">1234title: 格式化字符串漏洞总结date: 2025-10-29 17:13:28tags: [PWN,CTF]categories: [PWN]  fmt漏洞总结之前学的格式化字符串漏洞十分散乱，故写一篇文章来总结目前遇到的格式化字符串利用方式。我会通过知识点加例题的方式来 格式化字符串漏洞常用探测payload 1AAAA-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p-%p  2.2 格式化字符串攻击技术 泄露栈数据: 使用 %x、%p 等 任意地址读: 使用 %s 任意地址写: 使用 %n ← 本题使用！  printf函数机制 1234567891011121314printf函数通过解析格式化字符串来决定如何从栈中读取参数：栈布局示例：+------------------+|  返回地址        |+------------------+|  格式化字符串指针 | ← printf的第1个参数+------------------+|  参数1           | ← %x读取这里...</div></div></div></a><a class="pagination-related" href="/2025/10/23/large%20bin%20attack/" title=""><img class="cover" src="/blog_card_picture/5.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2"></div></div><div class="info-2"><div class="info-item-1">1234title: large bin attack学习date: 2025-10-23 11:32:34tags: [PWN,CTF]categories: [PWN]  large bin attack![image-20251023113054033](large bin attack&#x2F;image-20251023113054033.png) large bin attack原理 Glibc 在将一个 chunk 插入 Large Bin 时，会尝试将它链入已有的 chunk 链表中。如果我们将已有 chunk (Chunk 0) 的 bk_nextsize 指针修改为 TargetAddr - 0x20，由于链表操作逻辑： victim-&gt;bk_nextsize-&gt;fd_nextsize = new_chunk 系统就会执行： *(TargetAddr - 0x20 + 0x20) = new_chunk 即： *TargetAddr = new_chunk 题目解析：2024年强网拟态初赛正常菜单题，增删改查都有 ![img](large bin...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">Xilker</div><div class="author-info-description">自律源于热爱</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">19</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xiler2237"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/xiler2237" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:your-email@gmail.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到 Xilker's Blog！自律源于热爱。</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/02/13/SHCTF-xilker-wp/" title="SHCTF二进制部分全解wp"><img src="/blog_card_picture/5.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="SHCTF二进制部分全解wp"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/13/SHCTF-xilker-wp/" title="SHCTF二进制部分全解wp">SHCTF二进制部分全解wp</a><time datetime="2026-02-13T03:08:25.000Z" title="发表于 2026-02-13 11:08:25">2026-02-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/12/26/Reverse%E6%89%8B%E6%90%93%E8%84%9A%E6%9C%AC%E7%AF%87/" title="Reverse手搓脚本篇"><img src="/blog_card_picture/3.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Reverse手搓脚本篇"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/12/26/Reverse%E6%89%8B%E6%90%93%E8%84%9A%E6%9C%AC%E7%AF%87/" title="Reverse手搓脚本篇">Reverse手搓脚本篇</a><time datetime="2025-12-26T08:27:10.000Z" title="发表于 2025-12-26 16:27:10">2025-12-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/11/23/ISCTF%E9%A2%98%E8%A7%A3/" title="ISCTF二进制部分wp"><img src="/blog_card_picture/1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ISCTF二进制部分wp"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/11/23/ISCTF%E9%A2%98%E8%A7%A3/" title="ISCTF二进制部分wp">ISCTF二进制部分wp</a><time datetime="2025-11-23T13:32:34.000Z" title="发表于 2025-11-23 21:32:34">2025-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/29/fmt%E6%BC%8F%E6%B4%9E/" title="无标题"><img src="/blog_card_picture/4.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/10/29/fmt%E6%BC%8F%E6%B4%9E/" title="无标题">无标题</a><time datetime="2025-10-29T09:12:28.380Z" title="发表于 2025-10-29 17:12:28">2025-10-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/27/FMC%E9%80%86%E5%90%91/" title="无标题"><img src="/blog_card_picture/2.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无标题"/ loading='lazy'></a><div class="content"><a class="title" href="/2025/10/27/FMC%E9%80%86%E5%90%91/" title="无标题">无标题</a><time datetime="2025-10-27T07:12:38.400Z" title="发表于 2025-10-27 15:12:38">2025-10-27</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Xilker</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0-b1</a></span></div><div class="footer_custom_text">Powered <a href="https://hexo.io" target="_blank">Hexo</a>,Hosted <a href="https://vercel.com" target="_blank">Vercel</a> | Hosted <a href="https://www.cloudflare.com" target="_blank">Cloudflare</a>,CDN BY <a href="https://www.jsdelivr.com" target="_blank">jsDelivr</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script src="/js/title.js"></script><script src="/js/runtime.js"></script><script src="/js/random.js"></script><script src="/js/post-card-bg.js"></script><script src="/js/card-click.js"></script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script><script src="/js/tag-chart.js"></script><script src="/js/category-chart.js"></script><script src="/js/busuanzi-index.js"></script></div></body></html>
